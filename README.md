@@ -1,83 +1,67 @@
-# PyStringLib | لایبرری پردازش رشته شبیه پایتون برای C++
+# PyStringLib
 
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+PyStringLib — a C++ library implementing Python-like string utilities.
 
-📚 **English below**
+## Overview
 
----
+PyStringLib provides a set of string utilities inspired by Python's string API, implemented in modern C++ for performance and embeddability. This repo is primarily C++.
 
-## 📌 معرفی (Introduction - فارسی)
+## Contents
 
-کتابخانه‌ی PyStringLib مجموعه‌ای از توابع مفید برای پردازش رشته‌هاست که در C++ نوشته شده و از رفتارهای پایتونی مثل `slice`, `replace`, `find`, `count` و ... پشتیبانی می‌کند.
+- Source code (src/)
+- Headers (include/)
+- CMake configuration (CMakeLists.txt)
+- Examples (examples/) and tests (tests/) if present
 
-هدف این پروژه ارائه‌ی ابزاری ساده برای توسعه‌دهندگان C++ است که بتوانند با الهام از پایتون، کدنویسی راحت‌تری داشته باشند.
+## Requirements
 
----
+- C++17-compatible compiler (g++, clang, MSVC)
+- CMake 3.10+
+- Git
+- Optional: Conan/vcpkg for dependency management
 
-## ⚙️ روش استفاده (Usage)
+## Build (CMake — exact steps)
 
-```cpp
-#include "PyString.h"
+1. Clone:
+   git clone https://github.com/Pouyazadmehr83/PyStringLib.git
+   cd PyStringLib
 
-PyString py;
-std::string text = "pouya";
+2. Create build directory and configure:
+   mkdir build
+   cd build
+   cmake .. -DCMAKE_BUILD_TYPE=Release
 
-std::cout << py.revers(text);         // Output: "ayuoP"
-std::cout << py.removeVowels(text);   // Output: "py"
-std::cout << py.slice(text, 1, 4, 1); // Output: "ouy"
-std::cout << py.find(text, "uya");    // Output: 2
-```
+3. Build:
+   cmake --build . --config Release
 
----
+4. (Optional) Run tests:
+   ctest --output-on-failure
 
-## 🚀 نصب (Installation)
+## Build with g++ (single-file example)
 
-```bash
-git clone https://github.com/Pouyazadmehr83/PyStringLib.git
-cd PyStringLib
-g++ -Iinclude src/PyString.cpp examples/main.cpp -o pystring_demo
-./pystring_demo
-```
+g++ -std=c++17 -O2 -Iinclude -o example examples/example.cpp src/pystringlib.cpp
 
----
+Adjust file names to the actual source structure.
 
-## 📄 لایسنس
+## Usage
 
-این پروژه تحت مجوز MIT منتشر شده است.
+- Link the compiled library to your project or include header-only utilities.
+- Example (pseudo):
+  #include "pystringlib/pystring.h"
+  using namespace pystring;
+  auto s = pystring::strip("  hello  ");
 
----
+## Packaging & Installation
 
-## 🌐 English Version
+- Optionally create a package with CPack or provide install targets via CMake:
+  cmake --install . --prefix /usr/local
 
-### 📌 About the Project
+## Contributing
 
-PyStringLib is a lightweight C++ library that brings some Python-like string functions into your C++ code, such as `slice`, `replace`, `find`, `count`, and more.
+- Follow C++17 idioms, add tests for new behavior, and provide clear API documentation.
+- Raise PRs with test coverage and examples.
 
-### ⚙️ Usage
+## License & Contact
 
-```cpp
-#include "PyString.h"
-
-PyString py;
-std::string text = "pouya";
-
-std::cout << py.revers(text);         // "ayuoP"
-std::cout << py.removeVowels(text);   // "py"
-std::cout << py.slice(text, 1, 4, 1); // "ouy"
-std::cout << py.find(text, "uya");    // 2
-```
-
-### 📦 Installation
-
-```bash
-git clone https://github.com/Pouyazadmehr83/PyStringLib.git
-cd PyStringLib
-g++ -Iinclude src/PyString.cpp examples/main.cpp -o pystring_demo
-./pystring_demo
-```
-
----
-
-### 📄 License
-
-This project is licensed under the MIT License.
+Add a LICENSE file (recommended).
+Author: Pouyazadmehr83
