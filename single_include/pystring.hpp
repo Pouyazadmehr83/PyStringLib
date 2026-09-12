@@ -13,12 +13,15 @@
 #include <algorithm>
 #include <cctype>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <initializer_list>
+#include <iomanip>
 #include <iostream>
 #include <iterator>
 #include <map>
 #include <optional>
+#include <regex>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -1352,6 +1355,512 @@ inline std::string format_map(std::string_view fmt, std::initializer_list<std::p
 
 // --- End: format.hpp ---
 
+// --- Begin: utf8.hpp ---
+
+
+namespace pystring {
+
+namespace detail {
+
+/**
+ * @brief Returns byte length of UTF-8 code point from its leading byte (1..4), or 1 if invalid.
+ */
+inline size_t utf8_codepoint_length(unsigned char lead) noexcept {
+    if ((lead & 0x80) == 0x00) return 1;        // 0xxxxxxx: 1 byte (ASCII)
+    if ((lead & 0xE0) == 0xC0) return 2;        // 110xxxxx: 2 bytes
+    if ((lead & 0xF0) == 0xE0) return 3;        // 1110xxxx: 3 bytes
+    if ((lead & 0xF8) == 0xF0) return 4;        // 11110xxx: 4 bytes
+    return 1; // invalid or continuation byte, step by 1
+}
+
+} // namespace detail
+
+/**
+ * @brief Returns true if the string is valid UTF-8.
+ */
+inline bool is_valid_utf8(std::string_view s) noexcept {
+    size_t i = 0;
+    size_t n = s.size();
+
+    while (i < n) {
+        unsigned char c = static_cast<unsigned char>(s[i]);
+        if (c <= 0x7F) {
+            ++i;
+        } else if ((c & 0xE0) == 0xC0) {
+            if (i + 1 >= n) return false;
+            if ((static_cast<unsigned char>(s[i + 1]) & 0xC0) != 0x80) return false;
+            i += 2;
+        } else if ((c & 0xF0) == 0xE0) {
+            if (i + 2 >= n) return false;
+            if ((static_cast<unsigned char>(s[i + 1]) & 0xC0) != 0x80) return false;
+            if ((static_cast<unsigned char>(s[i + 2]) & 0xC0) != 0x80) return false;
+            i += 3;
+        } else if ((c & 0xF8) == 0xF0) {
+            if (i + 3 >= n) return false;
+            if ((static_cast<unsigned char>(s[i + 1]) & 0xC0) != 0x80) return false;
+            if ((static_cast<unsigned char>(s[i + 2]) & 0xC0) != 0x80) return false;
+            if ((static_cast<unsigned char>(s[i + 3]) & 0xC0) != 0x80) return false;
+            i += 4;
+        } else {
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * @brief Returns the number of Unicode code points in s (not raw bytes).
+ * Supports Persian, Arabic, CJK, Emojis, and multi-byte characters.
+ */
+inline size_t utf8_len(std::string_view s) noexcept {
+    size_t count = 0;
+    for (unsigned char c : s) {
+        // Count bytes that are NOT continuation bytes (10xxxxxx)
+        if ((c & 0xC0) != 0x80) {
+            ++count;
+        }
+    }
+    return count;
+}
+
+/**
+ * @brief Extracts individual Unicode code points as string views.
+ */
+inline std::vector<std::string_view> utf8_chars_view(std::string_view s) {
+    std::vector<std::string_view> result;
+    size_t i = 0;
+    size_t n = s.size();
+
+    while (i < n) {
+        unsigned char lead = static_cast<unsigned char>(s[i]);
+        size_t cp_len = detail::utf8_codepoint_length(lead);
+        if (i + cp_len > n) {
+            cp_len = n - i;
+        }
+        result.push_back(s.substr(i, cp_len));
+        i += cp_len;
+    }
+    return result;
+}
+
+/**
+ * @brief Extracts individual Unicode code points as std::vector<std::string>.
+ */
+inline std::vector<std::string> utf8_chars(std::string_view s) {
+    auto views = utf8_chars_view(s);
+    std::vector<std::string> result;
+    result.reserve(views.size());
+    for (auto v : views) {
+        result.emplace_back(v);
+    }
+    return result;
+}
+
+/**
+ * @brief Slices a UTF-8 string by Unicode code points (safe for Persian, Arabic, and Emojis).
+ */
+inline std::string utf8_slice(std::string_view s, const Slice& sl) {
+    auto chars = utf8_chars_view(s);
+    auto [start_idx, stop_idx, step, len] = sl.compute(chars.size());
+    if (len == 0) {
+        return "";
+    }
+
+    std::string result;
+    result.reserve(s.size());
+
+    if (step > 0) {
+        for (ptrdiff_t i = start_idx; i < stop_idx && static_cast<size_t>(i) < chars.size(); i += step) {
+            result.append(chars[static_cast<size_t>(i)]);
+        }
+    } else {
+        for (ptrdiff_t i = start_idx; i > stop_idx && i >= 0; i += step) {
+            result.append(chars[static_cast<size_t>(i)]);
+        }
+    }
+    return result;
+}
+
+inline std::string utf8_slice(std::string_view s, 
+                              std::optional<ptrdiff_t> start = std::nullopt,
+                              std::optional<ptrdiff_t> stop = std::nullopt,
+                              std::optional<ptrdiff_t> step = std::nullopt) {
+    return utf8_slice(s, Slice(start, stop, step));
+}
+
+/**
+ * @brief Reverses a UTF-8 string by Unicode code points (does not corrupt multi-byte letters).
+ */
+inline std::string utf8_reverse(std::string_view s) {
+    return utf8_slice(s, Slice(std::nullopt, std::nullopt, -1));
+}
+
+} // namespace pystring
+
+
+// --- End: utf8.hpp ---
+
+// --- Begin: case_conv.hpp ---
+
+
+namespace pystring {
+
+namespace detail {
+
+/**
+ * @brief Splits an identifier string into logical words based on case boundaries, dashes, underscores, and spaces.
+ */
+inline std::vector<std::string> extract_words(std::string_view s) {
+    std::vector<std::string> words;
+    std::string current;
+
+    for (size_t i = 0; i < s.size(); ++i) {
+        unsigned char c = static_cast<unsigned char>(s[i]);
+
+        if (c == '_' || c == '-' || std::isspace(c)) {
+            if (!current.empty()) {
+                words.push_back(std::move(current));
+                current.clear();
+            }
+        } else if (std::isupper(c)) {
+            // Check if camelCase boundary: prev char is lowercase OR next char is lowercase
+            bool prev_is_lower = (i > 0 && std::islower(static_cast<unsigned char>(s[i - 1])));
+            bool next_is_lower = (i + 1 < s.size() && std::islower(static_cast<unsigned char>(s[i + 1])));
+
+            if (prev_is_lower || (!current.empty() && next_is_lower && current.size() > 1)) {
+                if (!current.empty()) {
+                    words.push_back(std::move(current));
+                    current.clear();
+                }
+            }
+            current.push_back(static_cast<char>(std::tolower(c)));
+        } else {
+            current.push_back(static_cast<char>(std::tolower(c)));
+        }
+    }
+
+    if (!current.empty()) {
+        words.push_back(std::move(current));
+    }
+    return words;
+}
+
+} // namespace detail
+
+/**
+ * @brief Converts string to snake_case (e.g. "userFirstName" -> "user_first_name").
+ */
+inline std::string to_snake_case(std::string_view s) {
+    auto words = detail::extract_words(s);
+    if (words.empty()) return "";
+
+    std::string result = words[0];
+    for (size_t i = 1; i < words.size(); ++i) {
+        result.push_back('_');
+        result.append(words[i]);
+    }
+    return result;
+}
+
+/**
+ * @brief Converts string to kebab-case (e.g. "userFirstName" -> "user-first-name").
+ */
+inline std::string to_kebab_case(std::string_view s) {
+    auto words = detail::extract_words(s);
+    if (words.empty()) return "";
+
+    std::string result = words[0];
+    for (size_t i = 1; i < words.size(); ++i) {
+        result.push_back('-');
+        result.append(words[i]);
+    }
+    return result;
+}
+
+/**
+ * @brief Converts string to camelCase (e.g. "user_first_name" -> "userFirstName").
+ */
+inline std::string to_camel_case(std::string_view s) {
+    auto words = detail::extract_words(s);
+    if (words.empty()) return "";
+
+    std::string result = words[0];
+    for (size_t i = 1; i < words.size(); ++i) {
+        std::string w = words[i];
+        if (!w.empty()) {
+            w[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(w[0])));
+        }
+        result.append(w);
+    }
+    return result;
+}
+
+/**
+ * @brief Converts string to PascalCase (e.g. "user_first_name" -> "UserFirstName").
+ */
+inline std::string to_pascal_case(std::string_view s) {
+    auto words = detail::extract_words(s);
+    if (words.empty()) return "";
+
+    std::string result;
+    for (size_t i = 0; i < words.size(); ++i) {
+        std::string w = words[i];
+        if (!w.empty()) {
+            w[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(w[0])));
+        }
+        result.append(w);
+    }
+    return result;
+}
+
+} // namespace pystring
+
+
+// --- End: case_conv.hpp ---
+
+// --- Begin: regex_ops.hpp ---
+
+
+namespace pystring {
+
+/**
+ * @brief Checks if entire string matches regex pattern (like Python re.fullmatch).
+ */
+inline bool matches(std::string_view s, std::string_view pattern) {
+    try {
+        std::regex re(pattern.data(), pattern.size());
+        return std::regex_match(s.begin(), s.end(), re);
+    } catch (const std::regex_error&) {
+        return false;
+    }
+}
+
+/**
+ * @brief Checks if regex pattern is found anywhere in string (like Python re.search).
+ */
+inline bool search_regex(std::string_view s, std::string_view pattern) {
+    try {
+        std::regex re(pattern.data(), pattern.size());
+        return std::regex_search(s.begin(), s.end(), re);
+    } catch (const std::regex_error&) {
+        return false;
+    }
+}
+
+/**
+ * @brief Replaces occurrences matching regex pattern with replacement (like Python re.sub).
+ */
+inline std::string replace_regex(std::string_view s, std::string_view pattern, std::string_view replacement) {
+    try {
+        std::regex re(pattern.data(), pattern.size());
+        std::string str(s);
+        std::string rep(replacement);
+        return std::regex_replace(str, re, rep);
+    } catch (const std::regex_error&) {
+        return std::string(s);
+    }
+}
+
+/**
+ * @brief Splits string by regex pattern delimiters (like Python re.split).
+ */
+inline std::vector<std::string> split_regex(std::string_view s, std::string_view pattern) {
+    std::vector<std::string> result;
+    try {
+        std::regex re(pattern.data(), pattern.size());
+        std::string str(s);
+        std::sregex_token_iterator iter(str.begin(), str.end(), re, -1);
+        std::sregex_token_iterator end;
+        for (; iter != end; ++iter) {
+            result.push_back(*iter);
+        }
+    } catch (const std::regex_error&) {
+        result.emplace_back(s);
+    }
+    return result;
+}
+
+/**
+ * @brief Finds all non-overlapping regex matches in string (like Python re.findall).
+ */
+inline std::vector<std::string> findall(std::string_view s, std::string_view pattern) {
+    std::vector<std::string> result;
+    try {
+        std::regex re(pattern.data(), pattern.size());
+        std::string str(s);
+        auto words_begin = std::sregex_iterator(str.begin(), str.end(), re);
+        auto words_end = std::sregex_iterator();
+        for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
+            result.push_back(i->str());
+        }
+    } catch (const std::regex_error&) {
+        // Return empty vector on invalid regex
+    }
+    return result;
+}
+
+} // namespace pystring
+
+
+// --- End: regex_ops.hpp ---
+
+// --- Begin: algo.hpp ---
+
+
+namespace pystring {
+
+/**
+ * @brief Computes Levenshtein edit distance between two strings (insertions, deletions, substitutions).
+ * Space complexity: O(min(m, n)).
+ */
+inline size_t levenshtein(std::string_view s1, std::string_view s2) {
+    if (s1 == s2) return 0;
+    if (s1.empty()) return s2.size();
+    if (s2.empty()) return s1.size();
+
+    if (s1.size() < s2.size()) {
+        std::swap(s1, s2);
+    }
+
+    // s2 is shorter or equal length
+    std::vector<size_t> prev(s2.size() + 1);
+    std::vector<size_t> curr(s2.size() + 1);
+
+    for (size_t j = 0; j <= s2.size(); ++j) {
+        prev[j] = j;
+    }
+
+    for (size_t i = 0; i < s1.size(); ++i) {
+        curr[0] = i + 1;
+        for (size_t j = 0; j < s2.size(); ++j) {
+            size_t cost = (s1[i] == s2[j]) ? 0 : 1;
+            curr[j + 1] = std::min({
+                curr[j] + 1,        // insertion
+                prev[j + 1] + 1,    // deletion
+                prev[j] + cost      // substitution
+            });
+        }
+        prev = curr;
+    }
+
+    return prev[s2.size()];
+}
+
+/**
+ * @brief Computes Levenshtein similarity ratio between 0.0 (completely different) and 1.0 (identical).
+ */
+inline double similarity(std::string_view s1, std::string_view s2) {
+    if (s1 == s2) return 1.0;
+    size_t max_len = std::max(s1.size(), s2.size());
+    if (max_len == 0) return 1.0;
+
+    size_t dist = levenshtein(s1, s2);
+    return 1.0 - (static_cast<double>(dist) / static_cast<double>(max_len));
+}
+
+/**
+ * @brief Encodes string to Base64.
+ */
+inline std::string to_base64(std::string_view s) {
+    static constexpr char table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    std::string result;
+    result.reserve(((s.size() + 2) / 3) * 4);
+
+    size_t i = 0;
+    while (i < s.size()) {
+        size_t remaining = s.size() - i;
+        uint32_t octet_a = static_cast<unsigned char>(s[i++]);
+        uint32_t octet_b = (remaining > 1) ? static_cast<unsigned char>(s[i++]) : 0;
+        uint32_t octet_c = (remaining > 2) ? static_cast<unsigned char>(s[i++]) : 0;
+
+        uint32_t triple = (octet_a << 16) | (octet_b << 8) | octet_c;
+
+        result.push_back(table[(triple >> 18) & 0x3F]);
+        result.push_back(table[(triple >> 12) & 0x3F]);
+        result.push_back((remaining > 1) ? table[(triple >> 6) & 0x3F] : '=');
+        result.push_back((remaining > 2) ? table[triple & 0x3F] : '=');
+    }
+    return result;
+}
+
+/**
+ * @brief Decodes Base64 string.
+ */
+inline std::string from_base64(std::string_view s) {
+    static const auto decode_char = [](char c) -> int {
+        if (c >= 'A' && c <= 'Z') return c - 'A';
+        if (c >= 'a' && c <= 'z') return c - 'a' + 26;
+        if (c >= '0' && c <= '9') return c - '0' + 52;
+        if (c == '+') return 62;
+        if (c == '/') return 63;
+        return -1;
+    };
+
+    std::string result;
+    result.reserve((s.size() * 3) / 4);
+
+    uint32_t buf = 0;
+    int bits = 0;
+    for (char c : s) {
+        if (c == '=') break;
+        int val = decode_char(c);
+        if (val < 0) continue; // skip invalid / whitespace
+        buf = (buf << 6) | static_cast<uint32_t>(val);
+        bits += 6;
+        if (bits >= 8) {
+            bits -= 8;
+            result.push_back(static_cast<char>((buf >> bits) & 0xFF));
+        }
+    }
+    return result;
+}
+
+/**
+ * @brief Converts binary / ASCII string to hexadecimal representation.
+ */
+inline std::string to_hex(std::string_view s, bool uppercase = false) {
+    static constexpr char hex_lower[] = "0123456789abcdef";
+    static constexpr char hex_upper[] = "0123456789ABCDEF";
+    const char* hex_digits = uppercase ? hex_upper : hex_lower;
+
+    std::string result;
+    result.reserve(s.size() * 2);
+    for (unsigned char c : s) {
+        result.push_back(hex_digits[(c >> 4) & 0x0F]);
+        result.push_back(hex_digits[c & 0x0F]);
+    }
+    return result;
+}
+
+/**
+ * @brief Decodes hexadecimal string back to original string.
+ */
+inline std::string from_hex(std::string_view s) {
+    auto hex_val = [](char c) -> int {
+        if (c >= '0' && c <= '9') return c - '0';
+        if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+        if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+        return -1;
+    };
+
+    std::string result;
+    result.reserve(s.size() / 2);
+
+    for (size_t i = 0; i + 1 < s.size(); i += 2) {
+        int h1 = hex_val(s[i]);
+        int h2 = hex_val(s[i + 1]);
+        if (h1 >= 0 && h2 >= 0) {
+            result.push_back(static_cast<char>((h1 << 4) | h2));
+        }
+    }
+    return result;
+}
+
+} // namespace pystring
+
+
+// --- End: algo.hpp ---
+
 // --- Begin: core.hpp ---
 
 
@@ -1464,6 +1973,107 @@ public:
 
     String slice(const Slice& sl) const {
         return String(pystring::slice(m_str, sl));
+    }
+
+    // ------------------------------------------------------------------------
+    // UTF-8 & Unicode Support
+    // ------------------------------------------------------------------------
+    size_t utf8_len() const noexcept {
+        return pystring::utf8_len(m_str);
+    }
+
+    bool is_valid_utf8() const noexcept {
+        return pystring::is_valid_utf8(m_str);
+    }
+
+    String utf8_slice(std::optional<ptrdiff_t> start = std::nullopt,
+                      std::optional<ptrdiff_t> stop = std::nullopt,
+                      std::optional<ptrdiff_t> step = std::nullopt) const {
+        return String(pystring::utf8_slice(m_str, start, stop, step));
+    }
+
+    String utf8_slice(const Slice& sl) const {
+        return String(pystring::utf8_slice(m_str, sl));
+    }
+
+    String utf8_reverse() const {
+        return String(pystring::utf8_reverse(m_str));
+    }
+
+    std::vector<String> utf8_chars() const {
+        auto chars = pystring::utf8_chars(m_str);
+        std::vector<String> result;
+        result.reserve(chars.size());
+        for (auto& c : chars) {
+            result.emplace_back(std::move(c));
+        }
+        return result;
+    }
+
+    // ------------------------------------------------------------------------
+    // Case Converters (snake_case, camelCase, kebab-case, PascalCase)
+    // ------------------------------------------------------------------------
+    String to_snake_case() const { return String(pystring::to_snake_case(m_str)); }
+    String to_camel_case() const { return String(pystring::to_camel_case(m_str)); }
+    String to_kebab_case() const { return String(pystring::to_kebab_case(m_str)); }
+    String to_pascal_case() const { return String(pystring::to_pascal_case(m_str)); }
+
+    // ------------------------------------------------------------------------
+    // Regex Operations (Python re style)
+    // ------------------------------------------------------------------------
+    bool matches(std::string_view pattern) const {
+        return pystring::matches(m_str, pattern);
+    }
+    bool search_regex(std::string_view pattern) const {
+        return pystring::search_regex(m_str, pattern);
+    }
+    String replace_regex(std::string_view pattern, std::string_view replacement) const {
+        return String(pystring::replace_regex(m_str, pattern, replacement));
+    }
+    std::vector<String> split_regex(std::string_view pattern) const {
+        auto parts = pystring::split_regex(m_str, pattern);
+        std::vector<String> result;
+        result.reserve(parts.size());
+        for (auto& p : parts) result.emplace_back(std::move(p));
+        return result;
+    }
+    std::vector<String> findall(std::string_view pattern) const {
+        auto matches_list = pystring::findall(m_str, pattern);
+        std::vector<String> result;
+        result.reserve(matches_list.size());
+        for (auto& m : matches_list) result.emplace_back(std::move(m));
+        return result;
+    }
+
+    // ------------------------------------------------------------------------
+    // Algorithms & Codecs (Levenshtein, Similarity, Base64, Hex)
+    // ------------------------------------------------------------------------
+    size_t levenshtein(std::string_view other) const {
+        return pystring::levenshtein(m_str, other);
+    }
+    static size_t levenshtein(std::string_view s1, std::string_view s2) {
+        return pystring::levenshtein(s1, s2);
+    }
+
+    double similarity(std::string_view other) const {
+        return pystring::similarity(m_str, other);
+    }
+    static double similarity(std::string_view s1, std::string_view s2) {
+        return pystring::similarity(s1, s2);
+    }
+
+    String to_base64() const {
+        return String(pystring::to_base64(m_str));
+    }
+    static String from_base64(std::string_view s) {
+        return String(pystring::from_base64(s));
+    }
+
+    String to_hex(bool uppercase = false) const {
+        return String(pystring::to_hex(m_str, uppercase));
+    }
+    static String from_hex(std::string_view s) {
+        return String(pystring::from_hex(s));
     }
 
     // ------------------------------------------------------------------------
@@ -1798,7 +2408,7 @@ struct hash<pystring::String> {
  * 
  * PyStringLib is a modern C++ library bringing Python's powerful and elegant
  * string manipulation capabilities to C++17/20/23 with zero overhead,
- * method chaining, zero-copy string views, and Pythonic syntax.
+ * method chaining, zero-copy string views, UTF-8 awareness, and Pythonic syntax.
  * 
  * Developed by Pouya Zadmehr (Pouyazadmehr83).
  */

@@ -7,21 +7,22 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square" alt="License"></a>
   <img src="https://img.shields.io/badge/C%2B%2B-17%20%7C%2020%20%7C%2023-purple?style=flat-square&logo=cplusplus" alt="C++ Standard">
   <img src="https://img.shields.io/badge/library-header--only-orange?style=flat-square" alt="Header Only">
-  <img src="https://img.shields.io/badge/tests-111%20passed-success?style=flat-square" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-147%20passed-success?style=flat-square" alt="Tests">
   <img src="https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey?style=flat-square" alt="Platform">
   <a href="docs/README_FA.md"><img src="https://img.shields.io/badge/%D8%B1%D8%A7%D9%87%D9%86%D9%85%D8%A7%DB%8C%20%D9%81%D8%A7%D8%B1%D8%B3%DB%8C-Farsi-green?style=flat-square" alt="Persian Docs"></a>
 </p>
 
 <p align="center">
   <b>Python's beloved string manipulation superpowers brought into Modern C++.</b><br>
-  Header-only • Zero-overhead string views • Pythonic slicing &amp; negative indexing • Fluent chaining • 5.3M+ ops/sec.
+  Header-only • Zero-overhead string views • Pythonic slicing &amp; negative indexing • UTF-8 Unicode • Interactive REPL • 5.3M+ ops/sec.
 </p>
 
 <p align="center">
   <a href="#quickstart">Quickstart</a> •
+  <a href="#interactive-terminal-repl">Interactive REPL</a> •
   <a href="#feature-highlights">Features</a> •
   <a href="#pythonic-slicing">Slicing Model</a> •
-  <a href="#method-matrix">Python Method Matrix</a> •
+  <a href="#method-matrix">Method Matrix</a> •
   <a href="#benchmarks">Benchmarks</a> •
   <a href="docs/API_REFERENCE.md">Full API Reference</a> •
   <a href="docs/README_FA.md">راهنمای فارسی</a>
@@ -61,10 +62,44 @@ auto reversed = String("hello world")(nullopt, nullopt, -1); // "dlrow olleh"
 - 🪶 **Single-Header Option:** Drop `single_include/pystring.hpp` into any project and start hacking instantly.
 - ⚡ **Zero-Copy Views:** High-performance functions (`split_view`, `strip_view`, `slice_view`, `partition_view`) powered by `std::string_view` for zero heap allocations.
 - 🔪 **Full Python Slicing Engine:** Exact CPython `[start:stop:step]` semantics, supporting negative steps, reverse strides, and negative bounds.
-- 🎯 **Python Negative Indexing:** Access last elements directly via `s[-1]`, `s[-2]`, or bounds-checked `s.at(-1)`.
-- 🔗 **Fluent Method Chaining:** Transform data cleanly: `s.strip().lower().replace("foo", "bar").upper()`.
-- 🧮 **Pythonic Operators:** Repetition (`s * 3`), formatting interpolation (`s % 42`), membership (`s.contains("key")`), and full relational comparisons.
-- 🛡️ **Extensively Tested:** 111 comprehensive unit tests covering edge cases, empty strings, and negative strides.
+- 🌐 **UTF-8 & Unicode Ready:** Safe slicing and character count for Persian, Arabic, CJK, and Emojis (`utf8_len`, `utf8_slice`, `utf8_reverse`).
+- 🔄 **Case Converters:** Instant transformation between `snake_case`, `camelCase`, `kebab-case`, and `PascalCase`.
+- 🔍 **Regex Powered:** Python `re`-like regex matching, replacing, splitting, and `findall`.
+- 🎯 **Fuzzy Matching:** Levenshtein edit distance and similarity ratio (`s.similarity("target")`).
+- 💻 **Interactive REPL:** Built-in terminal playground to evaluate Pythonic string expressions live without compiling!
+- 🛡️ **Extensively Tested:** 147 comprehensive unit tests covering edge cases, unicode, regex, and negative strides.
+
+---
+
+## Interactive Terminal REPL
+
+PyStringLib includes a built-in interactive shell where you can experiment with strings live in your terminal:
+
+```bash
+make repl
+./bin/pystring-repl
+```
+
+```text
+  ____        ____  _        _             _     _ _     
+ |  _ \ _   _/ ___|| |_ _ __(_)_ __   __ _| |   (_) |__  
+ | |_) | | | \___ \| __| '__| | '_ \ / _` | |   | | '_ \ 
+ |  __/| |_| |___) | |_| |  | | | | | (_| | |___| | |_) |
+ |_|    \__, |____/ \__|_|  |_|_| |_|\__, |_____|_|_.__/ 
+        |___/                        |___/               
+  Pythonic String Manipulation for Modern C++ (Interactive REPL)
+
+>>> s = "  Hello, Modern C++ World!  "
+>>> s.strip().to_snake_case()
+=> "hello_modern_c++_world"
+>>> s[::-1]
+=> "  !dlroW ++C nredoM ,olleH  "
+>>> fa = "سلام دنیا 🌟"
+>>> fa.utf8_len()
+=> 11 code points
+>>> s.similarity("Hello World")
+=> 0.392857
+```
 
 ---
 
@@ -155,6 +190,10 @@ PyStringLib implements Python's complete `str` standard library API:
 | Category | Methods |
 |---|---|
 | **Case Mapping** | `capitalize()`, `casefold()`, `lower()`, `upper()`, `swapcase()`, `title()` |
+| **Case Converters** | `to_snake_case()`, `to_camel_case()`, `to_kebab_case()`, `to_pascal_case()` |
+| **UTF-8 & Unicode** | `utf8_len()`, `utf8_slice()`, `utf8_reverse()`, `utf8_chars()`, `is_valid_utf8()` |
+| **Regex (Python re)**| `matches()`, `search_regex()`, `replace_regex()`, `split_regex()`, `findall()` |
+| **Codecs & Similarity**| `levenshtein()`, `similarity()`, `to_base64()`, `from_base64()`, `to_hex()`, `from_hex()` |
 | **Stripping** | `strip()`, `lstrip()`, `rstrip()`, `removeprefix()`, `removesuffix()` |
 | **Splitting** | `split()`, `rsplit()`, `splitlines()`, `partition()`, `rpartition()` |
 | **Joining** | `join(container)`, `join(begin, end)`, `join(initializer_list)` |
@@ -194,7 +233,8 @@ make benchmark
 git clone https://github.com/Pouyazadmehr83/PyStringLib.git
 cd PyStringLib
 
-make test        # Builds and runs all 111 unit tests
+make test        # Builds and runs all 147 unit tests
+make repl        # Builds the interactive terminal shell (./bin/pystring-repl)
 make examples    # Compiles showcase executables
 make benchmark   # Runs performance benchmark
 ```

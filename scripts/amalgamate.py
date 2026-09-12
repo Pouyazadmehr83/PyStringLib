@@ -14,6 +14,10 @@ HEADER_FILES = [
     "split_join.hpp",
     "ops.hpp",
     "format.hpp",
+    "utf8.hpp",
+    "case_conv.hpp",
+    "regex_ops.hpp",
+    "algo.hpp",
     "core.hpp",
     "pystring.hpp"
 ]

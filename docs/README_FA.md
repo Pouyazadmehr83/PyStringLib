@@ -262,6 +262,95 @@ String msg3 = pystring::format_map("کاربر: {user}، امتیاز: {score}",
 });
 ```
 
+### ۹. پشتیبانی از یونیکد، زبان فارسی و اموجی‌ها (UTF-8)
+
+در حالت عادی، هر کاراکتر فارسی یا اموجی در ++C چند بایت فضا می‌گیرد که باعث خطای اسلایس معمولی می‌شود. با متدهای UTF-8 این مشکل کاملاً حل شده است:
+
+```cpp
+String fa = "سلام دنیا 🌟";
+
+// شمارش تعداد حروف واقعی (نه تعداد بایت‌ها):
+std::cout << fa.utf8_len() << "\n";       // 11 کاراکتر (نه 20 بایت!)
+
+// برش امن بدون خراب شدن حروف چندبایتی:
+std::cout << fa.utf8_slice(0, 4) << "\n"; // "سلام"
+
+// برعکس کردن کلمه فارسی بدون شکستن بایت‌ها:
+std::cout << fa.utf8_reverse() << "\n";   // "🌟 ایند مالس"
+
+// تفکیک به حروف منفرد:
+auto chars = fa.utf8_chars(); // ["س", "ل", "ا", "م", " ", ...]
+```
+
+### ۱۰. تبدیل فرمت‌های نام‌گذاری (Case Converters)
+
+مناسب برای کارهای وب، پایگاه‌داده و پارس کردن JSON:
+
+```cpp
+String s = "user_first_name";
+
+s.to_camel_case();  // "userFirstName"
+s.to_pascal_case(); // "UserFirstName"
+s.to_kebab_case();  // "user-first-name"
+s.to_snake_case();  // "user_first_name"
+```
+
+### ۱۱. عبارات باقاعده به سبک پایتون (Regex)
+
+```cpp
+String text = "ایمیل‌های ارتباطی: info@site.com و support@org.ir";
+
+// پیدا کردن همه ایمیل‌ها با ریجکس (معادل re.findall):
+auto emails = text.findall(R"([\w.-]+@[\w.-]+\.\w+)");
+// ["info@site.com", "support@org.ir"]
+
+// بررسی انطباق کامل (معادل re.fullmatch):
+bool is_num = String("12345").matches(R"(\d+)"); // true
+
+// جایگزینی با الگو (معادل re.sub):
+String masked = text.replace_regex(R"([\w.-]+@[\w.-]+\.\w+)", "[محرمانه]");
+
+// تقسیم رشته با الگوهای چندگانه (معادل re.split):
+auto tokens = String("a, b; c   d").split_regex(R"([\s,;]+)");
+```
+
+### ۱۲. الگوریتم‌های شباهت، لون‌اشتاین، Base64 و Hex
+
+```cpp
+// محاسبه فاصله ویرایشی لون‌اشتاین:
+size_t dist = String::levenshtein("kitten", "sitting"); // 3
+
+// درصد شباهت بین دو متن (0.0 تا 1.0):
+double sim = String("pouya").similarity("pouya_z");     // ~0.71
+
+// کدگذاری و رمزگشایی Base64:
+String b64 = String("Hello").to_base64();               // "SGVsbG8="
+String original = String::from_base64(b64);             // "Hello"
+
+// تبدیل به هگزادسیمال و برعکس:
+String hex = String("Hello").to_hex();                  // "48656c6c6f"
+String text_again = String::from_hex(hex);              // "Hello"
+```
+
+### ۱۳. ترمینال تعاملی پایتون در ++C (Interactive REPL)
+
+کتابخانه شامل یک ابزار ترمینال آماده است که بدون نیاز به نوشتن کد ++C، می‌توانید عبارات رشته‌ای را تعاملی اجرا کنید:
+
+```bash
+make repl
+./bin/pystring-repl
+```
+نمونه استفاده زنده:
+```text
+>>> s = "hello world"
+>>> s.to_snake_case()
+"hello_world"
+>>> s.upper()
+"HELLO WORLD"
+>>> s[::-1]
+"dlrow olleh"
+```
+
 ---
 
 ## عملگرهای جادویی پایتون در ++C
@@ -329,7 +418,7 @@ make test
      PyStringLib Comprehensive Tests    
 ========================================
 
-Passed: 111 | Failed: 0 (All tests passed successfully!)
+Passed: 147 | Failed: 0 (All tests passed successfully!)
 ```
 
 ---

@@ -286,6 +286,90 @@ void test_legacy_compatibility() {
     TEST_EQUAL(py.replace("pouya", "ou", rep), "pxyzya", "legacy replace");
 }
 
+void test_utf8() {
+    using namespace pystring;
+
+    String fa = "سلام دنیا"; // 9 Unicode characters
+    TEST_EQUAL(fa.utf8_len(), 9, "utf8_len Persian");
+    TEST_ASSERT(fa.is_valid_utf8(), "is_valid_utf8");
+
+    String emojis = "🌟🚀🎉";
+    TEST_EQUAL(emojis.utf8_len(), 3, "utf8_len Emojis");
+
+    // UTF-8 slice
+    TEST_EQUAL(fa.utf8_slice(0, 4), "سلام", "utf8_slice 0..4");
+    TEST_EQUAL(fa.utf8_slice(5, 9), "دنیا", "utf8_slice 5..9");
+
+    // UTF-8 reverse
+    String word = "سلام";
+    TEST_EQUAL(word.utf8_reverse(), "مالس", "utf8_reverse");
+
+    // utf8_chars
+    auto chars = emojis.utf8_chars();
+    TEST_EQUAL(chars.size(), 3, "utf8_chars count");
+    TEST_EQUAL(chars[0], "🌟", "utf8_chars[0]");
+    TEST_EQUAL(chars[1], "🚀", "utf8_chars[1]");
+    TEST_EQUAL(chars[2], "🎉", "utf8_chars[2]");
+}
+
+void test_case_conversions() {
+    using namespace pystring;
+
+    TEST_EQUAL(String("userFirstName").to_snake_case(), "user_first_name", "to_snake_case camel");
+    TEST_EQUAL(String("User-First-Name").to_snake_case(), "user_first_name", "to_snake_case kebab");
+    TEST_EQUAL(String("user_first_name").to_camel_case(), "userFirstName", "to_camel_case snake");
+    TEST_EQUAL(String("user_first_name").to_kebab_case(), "user-first-name", "to_kebab_case snake");
+    TEST_EQUAL(String("user_first_name").to_pascal_case(), "UserFirstName", "to_pascal_case snake");
+}
+
+void test_regex() {
+    using namespace pystring;
+
+    String s = "Order 12345 confirmed";
+    TEST_ASSERT(s.search_regex(R"(\d+)"), "search_regex found");
+    TEST_ASSERT(String("12345").matches(R"(\d+)"), "matches digits");
+    TEST_ASSERT(!String("12345a").matches(R"(\d+)"), "matches fail");
+
+    String replaced = s.replace_regex(R"(\d+)", "[NUM]");
+    TEST_EQUAL(replaced, "Order [NUM] confirmed", "replace_regex");
+
+    String csv = "apple, orange; banana   grape";
+    auto tokens = csv.split_regex(R"([\s,;]+)");
+    TEST_EQUAL(tokens.size(), 4, "split_regex tokens size");
+    TEST_EQUAL(tokens[0], "apple", "split_regex [0]");
+    TEST_EQUAL(tokens[1], "orange", "split_regex [1]");
+    TEST_EQUAL(tokens[2], "banana", "split_regex [2]");
+    TEST_EQUAL(tokens[3], "grape", "split_regex [3]");
+
+    String text = "cat, bat, rat, mat";
+    auto matches = text.findall(R"([cbr]at)");
+    TEST_EQUAL(matches.size(), 3, "findall size");
+    TEST_EQUAL(matches[0], "cat", "findall[0]");
+    TEST_EQUAL(matches[1], "bat", "findall[1]");
+    TEST_EQUAL(matches[2], "rat", "findall[2]");
+}
+
+void test_algo() {
+    using namespace pystring;
+
+    // Levenshtein & Similarity
+    TEST_EQUAL(String::levenshtein("kitten", "sitting"), 3, "levenshtein kitten sitting");
+    TEST_EQUAL(String("hello").levenshtein("hello"), 0, "levenshtein identical");
+    TEST_ASSERT(String("kitten").similarity("sitting") > 0.5, "similarity ratio");
+    TEST_EQUAL(String("hello").similarity("hello"), 1.0, "similarity 1.0");
+
+    // Base64
+    String original = "Hello, Modern C++!";
+    String b64 = original.to_base64();
+    TEST_EQUAL(b64, "SGVsbG8sIE1vZGVybiBDKysh", "to_base64");
+    TEST_EQUAL(String::from_base64(b64), original, "from_base64");
+
+    // Hex
+    String hex = String("Hello").to_hex();
+    TEST_EQUAL(hex, "48656c6c6f", "to_hex");
+    TEST_EQUAL(String::from_hex("48656c6c6f"), "Hello", "from_hex");
+}
+
 int main() {
     std::cout << "\033[1;34m========================================\033[0m\n";
     std::cout << "\033[1;34m     PyStringLib Comprehensive Tests    \033[0m\n";
@@ -299,6 +383,10 @@ int main() {
     test_formatting();
     test_operators_and_chaining();
     test_legacy_compatibility();
+    test_utf8();
+    test_case_conversions();
+    test_regex();
+    test_algo();
 
     std::cout << "\n\033[1;32mPassed: " << tests_passed << "\033[0m | ";
     if (tests_failed > 0) {

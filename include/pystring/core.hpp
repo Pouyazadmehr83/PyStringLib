@@ -7,6 +7,10 @@
 #include "split_join.hpp"
 #include "ops.hpp"
 #include "format.hpp"
+#include "utf8.hpp"
+#include "case_conv.hpp"
+#include "regex_ops.hpp"
+#include "algo.hpp"
 
 #include <functional>
 #include <iostream>
@@ -125,6 +129,107 @@ public:
 
     String slice(const Slice& sl) const {
         return String(pystring::slice(m_str, sl));
+    }
+
+    // ------------------------------------------------------------------------
+    // UTF-8 & Unicode Support
+    // ------------------------------------------------------------------------
+    size_t utf8_len() const noexcept {
+        return pystring::utf8_len(m_str);
+    }
+
+    bool is_valid_utf8() const noexcept {
+        return pystring::is_valid_utf8(m_str);
+    }
+
+    String utf8_slice(std::optional<ptrdiff_t> start = std::nullopt,
+                      std::optional<ptrdiff_t> stop = std::nullopt,
+                      std::optional<ptrdiff_t> step = std::nullopt) const {
+        return String(pystring::utf8_slice(m_str, start, stop, step));
+    }
+
+    String utf8_slice(const Slice& sl) const {
+        return String(pystring::utf8_slice(m_str, sl));
+    }
+
+    String utf8_reverse() const {
+        return String(pystring::utf8_reverse(m_str));
+    }
+
+    std::vector<String> utf8_chars() const {
+        auto chars = pystring::utf8_chars(m_str);
+        std::vector<String> result;
+        result.reserve(chars.size());
+        for (auto& c : chars) {
+            result.emplace_back(std::move(c));
+        }
+        return result;
+    }
+
+    // ------------------------------------------------------------------------
+    // Case Converters (snake_case, camelCase, kebab-case, PascalCase)
+    // ------------------------------------------------------------------------
+    String to_snake_case() const { return String(pystring::to_snake_case(m_str)); }
+    String to_camel_case() const { return String(pystring::to_camel_case(m_str)); }
+    String to_kebab_case() const { return String(pystring::to_kebab_case(m_str)); }
+    String to_pascal_case() const { return String(pystring::to_pascal_case(m_str)); }
+
+    // ------------------------------------------------------------------------
+    // Regex Operations (Python re style)
+    // ------------------------------------------------------------------------
+    bool matches(std::string_view pattern) const {
+        return pystring::matches(m_str, pattern);
+    }
+    bool search_regex(std::string_view pattern) const {
+        return pystring::search_regex(m_str, pattern);
+    }
+    String replace_regex(std::string_view pattern, std::string_view replacement) const {
+        return String(pystring::replace_regex(m_str, pattern, replacement));
+    }
+    std::vector<String> split_regex(std::string_view pattern) const {
+        auto parts = pystring::split_regex(m_str, pattern);
+        std::vector<String> result;
+        result.reserve(parts.size());
+        for (auto& p : parts) result.emplace_back(std::move(p));
+        return result;
+    }
+    std::vector<String> findall(std::string_view pattern) const {
+        auto matches_list = pystring::findall(m_str, pattern);
+        std::vector<String> result;
+        result.reserve(matches_list.size());
+        for (auto& m : matches_list) result.emplace_back(std::move(m));
+        return result;
+    }
+
+    // ------------------------------------------------------------------------
+    // Algorithms & Codecs (Levenshtein, Similarity, Base64, Hex)
+    // ------------------------------------------------------------------------
+    size_t levenshtein(std::string_view other) const {
+        return pystring::levenshtein(m_str, other);
+    }
+    static size_t levenshtein(std::string_view s1, std::string_view s2) {
+        return pystring::levenshtein(s1, s2);
+    }
+
+    double similarity(std::string_view other) const {
+        return pystring::similarity(m_str, other);
+    }
+    static double similarity(std::string_view s1, std::string_view s2) {
+        return pystring::similarity(s1, s2);
+    }
+
+    String to_base64() const {
+        return String(pystring::to_base64(m_str));
+    }
+    static String from_base64(std::string_view s) {
+        return String(pystring::from_base64(s));
+    }
+
+    String to_hex(bool uppercase = false) const {
+        return String(pystring::to_hex(m_str, uppercase));
+    }
+    static String from_hex(std::string_view s) {
+        return String(pystring::from_hex(s));
     }
 
     // ------------------------------------------------------------------------

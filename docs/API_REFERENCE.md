@@ -238,3 +238,83 @@ For maximum performance, free functions provide zero-allocation `std::string_vie
 - `pystring::rstrip_view(str_view)`
 - `pystring::partition_view(str_view, sep)`
 - `pystring::rpartition_view(str_view, sep)`
+
+---
+
+## UTF-8 & Unicode Support
+
+Full Unicode and multi-byte character support (safe for Persian, Arabic, CJK, and Emojis without byte truncation):
+
+| Method | Signature | Description |
+|---|---|---|
+| `utf8_len()` | `size_t utf8_len() const noexcept` | Returns number of Unicode code points (not raw bytes) |
+| `is_valid_utf8()` | `bool is_valid_utf8() const noexcept` | Validates UTF-8 encoding integrity |
+| `utf8_slice(start, stop, step)` | `String utf8_slice(...) const` | Slices string by Unicode code points safely |
+| `utf8_reverse()` | `String utf8_reverse() const` | Reverses string without corrupting multi-byte letters |
+| `utf8_chars()` | `std::vector<String> utf8_chars() const` | Splits string into individual Unicode characters |
+
+```cpp
+String fa = "سلام دنیا 🌟";
+fa.utf8_len();                 // 11 (instead of 20 bytes!)
+fa.utf8_slice(0, 4);           // "سلام"
+fa.utf8_reverse();             // "🌟 ایند مالس"
+```
+
+---
+
+## Case Converters
+
+Transforms identifier conventions between common programming formats:
+
+| Method | Signature | Example Input | Result |
+|---|---|---|---|
+| `to_snake_case()` | `String to_snake_case() const` | `"userFirstName"` | `"user_first_name"` |
+| `to_camel_case()` | `String to_camel_case() const` | `"user_first_name"` | `"userFirstName"` |
+| `to_kebab_case()` | `String to_kebab_case() const` | `"user_first_name"` | `"user-first-name"` |
+| `to_pascal_case()` | `String to_pascal_case() const` | `"user_first_name"` | `"UserFirstName"` |
+
+---
+
+## Regex Operations
+
+Python `re`-inspired regular expression tools using the C++ standard library:
+
+| Method | Return | Description |
+|---|---|---|
+| `matches(pattern)` | `bool` | True if entire string matches regex (like `re.fullmatch`) |
+| `search_regex(pattern)` | `bool` | True if regex pattern is found anywhere (like `re.search`) |
+| `replace_regex(pattern, repl)` | `String` | Replaces occurrences with replacement pattern (like `re.sub`) |
+| `split_regex(pattern)` | `std::vector<String>` | Splits string by regex delimiters (like `re.split`) |
+| `findall(pattern)` | `std::vector<String>` | Returns list of all matching substrings (like `re.findall`) |
+
+```cpp
+String text = "Contact us at info@example.com or support@domain.org";
+auto emails = text.findall(R"([\w.-]+@[\w.-]+\.\w+)");
+// ["info@example.com", "support@domain.org"]
+```
+
+---
+
+## Algorithms & Codecs
+
+| Method | Description | Example |
+|---|---|---|
+| `levenshtein(other)` | Computes minimum edit distance | `String::levenshtein("kitten", "sitting") == 3` |
+| `similarity(other)` | Computes similarity ratio (0.0 .. 1.0) | `String("hello").similarity("hello") == 1.0` |
+| `to_base64()` | Encodes string to Base64 | `String("Hello").to_base64() == "SGVsbG8="` |
+| `from_base64(b64)` | Decodes Base64 to string | `String::from_base64("SGVsbG8=") == "Hello"` |
+| `to_hex(uppercase=false)` | Encodes string to hexadecimal | `String("Hello").to_hex() == "48656c6c6f"` |
+| `from_hex(hex)` | Decodes hexadecimal to string | `String::from_hex("48656c6c6f") == "Hello"` |
+
+---
+
+## Interactive Terminal REPL
+
+PyStringLib provides a built-in interactive Python-like terminal shell:
+
+```bash
+make repl
+./bin/pystring-repl
+```
+
+Supports variable assignment (`s = "text"`), live method evaluation (`s.upper()`, `s.to_snake_case()`, `s[::-1]`), repetition, and syntax inspection in real-time.

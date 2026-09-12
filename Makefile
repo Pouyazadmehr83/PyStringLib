@@ -13,6 +13,10 @@ test: directories
 	@echo "==> Running PyStringLib Test Suite:"
 	./$(BIN_DIR)/test_all
 
+repl: directories
+	$(CXX) $(CXXFLAGS) tools/pystring_repl.cpp -o $(BIN_DIR)/pystring-repl
+	@echo "==> Built REPL: ./$(BIN_DIR)/pystring-repl"
+
 examples: directories
 	$(CXX) $(CXXFLAGS) examples/basic_usage.cpp -o $(BIN_DIR)/example_basic
 	$(CXX) $(CXXFLAGS) examples/slicing_demo.cpp -o $(BIN_DIR)/example_slicing

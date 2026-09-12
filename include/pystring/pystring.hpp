@@ -7,7 +7,7 @@
  * 
  * PyStringLib is a modern C++ library bringing Python's powerful and elegant
  * string manipulation capabilities to C++17/20/23 with zero overhead,
- * method chaining, zero-copy string views, and Pythonic syntax.
+ * method chaining, zero-copy string views, UTF-8 awareness, and Pythonic syntax.
  * 
  * Developed by Pouya Zadmehr (Pouyazadmehr83).
  */
@@ -18,6 +18,10 @@
 #include "split_join.hpp"
 #include "ops.hpp"
 #include "format.hpp"
+#include "utf8.hpp"
+#include "case_conv.hpp"
+#include "regex_ops.hpp"
+#include "algo.hpp"
 #include "core.hpp"
 
 namespace pystring {

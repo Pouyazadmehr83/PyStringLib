@@ -62,6 +62,9 @@ if(PYSTRING_BUILD_EXAMPLES)
 
     add_executable(example_chaining examples/chaining_demo.cpp)
     target_link_libraries(example_chaining PRIVATE pystring)
+
+    add_executable(pystring_repl tools/pystring_repl.cpp)
+    target_link_libraries(pystring_repl PRIVATE pystring)
 endif()
 
 # -----------------------------------------------------------------------------
