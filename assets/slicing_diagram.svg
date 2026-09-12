@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 480" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+    <linearGradient id="boxGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#334155" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+    <linearGradient id="activeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#8b5cf6" />
+    </linearGradient>
+  </defs>
+
+  <style>
+    .header { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 700; font-size: 26px; fill: #f8fafc; }
+    .subheader { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; fill: #94a3b8; }
+    .pos-idx { font-family: monospace; font-size: 16px; font-weight: bold; fill: #38bdf8; text-anchor: middle; }
+    .char-val { font-family: monospace; font-size: 24px; font-weight: bold; fill: #f8fafc; text-anchor: middle; }
+    .neg-idx { font-family: monospace; font-size: 16px; font-weight: bold; fill: #f43f5e; text-anchor: middle; }
+    .label { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; }
+    .example-code { font-family: monospace; font-size: 14px; fill: #e2e8f0; }
+    .example-res { font-family: monospace; font-size: 14px; font-weight: bold; fill: #a3e635; }
+  </style>
+
+  <!-- Background -->
+  <rect width="960" height="480" rx="16" fill="url(#bgGrad)" stroke="#334155" stroke-width="1.5" />
+
+  <!-- Title -->
+  <g transform="translate(48, 50)">
+    <text class="header">Pythonic Slicing &amp; Dual Indexing Model</text>
+    <text y="28" class="subheader">Seamlessly supports positive indices, negative indices, and arbitrary step strides in C++</text>
+  </g>
+
+  <!-- Labels on the Left -->
+  <g transform="translate(48, 120)">
+    <text y="24" class="label" fill="#38bdf8">Positive Index [0..N-1]:</text>
+    <text y="82" class="label" fill="#f8fafc">Characters:</text>
+    <text y="140" class="label" fill="#f43f5e">Negative Index [-N..-1]:</text>
+  </g>
+
+  <!-- Array Cells (Letters: P Y T H O N I C) -->
+  <!-- 8 items: width 64 each, spacing 14 -> step 78. Start at X=240 -->
+  <!-- Index 0: P, 1: Y, 2: T, 3: H, 4: O, 5: N, 6: I, 7: C -->
+  <g transform="translate(230, 100)">
+    <!-- 0: P -->
+    <g transform="translate(0, 0)">
+      <text x="32" y="44" class="pos-idx">0</text>
+      <rect y="58" width="64" height="60" rx="8" fill="url(#boxGrad)" stroke="#475569" stroke-width="1.5" />
+      <text x="32" y="98" class="char-val">P</text>
+      <text x="32" y="145" class="neg-idx">-8</text>
+    </g>
+
+    <!-- 1: Y -->
+    <g transform="translate(76, 0)">
+      <text x="32" y="44" class="pos-idx">1</text>
+      <rect y="58" width="64" height="60" rx="8" fill="url(#activeGrad)" stroke="#60a5fa" stroke-width="2" />
+      <text x="32" y="98" class="char-val">Y</text>
+      <text x="32" y="145" class="neg-idx">-7</text>
+    </g>
+
+    <!-- 2: T -->
+    <g transform="translate(152, 0)">
+      <text x="32" y="44" class="pos-idx">2</text>
+      <rect y="58" width="64" height="60" rx="8" fill="url(#boxGrad)" stroke="#475569" stroke-width="1.5" />
+      <text x="32" y="98" class="char-val">T</text>
+      <text x="32" y="145" class="neg-idx">-6</text>
+    </g>
+
+    <!-- 3: H -->
+    <g transform="translate(228, 0)">
+      <text x="32" y="44" class="pos-idx">3</text>
+      <rect y="58" width="64" height="60" rx="8" fill="url(#activeGrad)" stroke="#60a5fa" stroke-width="2" />
+      <text x="32" y="98" class="char-val">H</text>
+      <text x="32" y="145" class="neg-idx">-5</text>
+    </g>
+
+    <!-- 4: O -->
+    <g transform="translate(304, 0)">
+      <text x="32" y="44" class="pos-idx">4</text>
+      <rect y="58" width="64" height="60" rx="8" fill="url(#boxGrad)" stroke="#475569" stroke-width="1.5" />
+      <text x="32" y="98" class="char-val">O</text>
+      <text x="32" y="145" class="neg-idx">-4</text>
+    </g>
+
+    <!-- 5: N -->
+    <g transform="translate(380, 0)">
+      <text x="32" y="44" class="pos-idx">5</text>
+      <rect y="58" width="64" height="60" rx="8" fill="url(#activeGrad)" stroke="#60a5fa" stroke-width="2" />
+      <text x="32" y="98" class="char-val">N</text>
+      <text x="32" y="145" class="neg-idx">-3</text>
+    </g>
+
+    <!-- 6: I -->
+    <g transform="translate(456, 0)">
+      <text x="32" y="44" class="pos-idx">6</text>
+      <rect y="58" width="64" height="60" rx="8" fill="url(#boxGrad)" stroke="#475569" stroke-width="1.5" />
+      <text x="32" y="98" class="char-val">I</text>
+      <text x="32" y="145" class="neg-idx">-2</text>
+    </g>
+
+    <!-- 7: C -->
+    <g transform="translate(532, 0)">
+      <text x="32" y="44" class="pos-idx">7</text>
+      <rect y="58" width="64" height="60" rx="8" fill="url(#boxGrad)" stroke="#475569" stroke-width="1.5" />
+      <text x="32" y="98" class="char-val">C</text>
+      <text x="32" y="145" class="neg-idx">-1</text>
+    </g>
+  </g>
+
+  <!-- Examples Showcase Card at Bottom -->
+  <g transform="translate(48, 280)">
+    <rect width="864" height="150" rx="10" fill="#0b1120" stroke="#1e293b" stroke-width="1.5" />
+
+    <text x="24" y="32" font-family="sans-serif" font-size="14px" font-weight="bold" fill="#38bdf8">PyString Slicing Syntax in C++:</text>
+
+    <!-- Row 1 -->
+    <g transform="translate(24, 60)">
+      <text class="example-code">s[-1]                      <tspan fill="#64748b">// Negative index</tspan></text>
+      <text x="300" class="example-res">== 'C'</text>
+
+      <text x="440" class="example-code">s(1, 6, 2)                 <tspan fill="#64748b">// Highlighted cells</tspan></text>
+      <text x="730" class="example-res">== "YHN"</text>
+    </g>
+
+    <!-- Row 2 -->
+    <g transform="translate(24, 90)">
+      <text class="example-code">s(-5, -2)                  <tspan fill="#64748b">// Negative range</tspan></text>
+      <text x="300" class="example-res">== "HON"</text>
+
+      <text x="440" class="example-code">s(null, null, -1)          <tspan fill="#64748b">// Python s[::-1]</tspan></text>
+      <text x="730" class="example-res">== "CINOHTYP"</text>
+    </g>
+
+    <!-- Row 3 -->
+    <g transform="translate(24, 120)">
+      <text class="example-code">s[slice(0, 4)]             <tspan fill="#64748b">// Slice object syntax</tspan></text>
+      <text x="300" class="example-res">== "PYTH"</text>
+
+      <text x="440" class="example-code">s.at(-2)                   <tspan fill="#64748b">// Bounds-checked index</tspan></text>
+      <text x="730" class="example-res">== 'I'</text>
+    </g>
+  </g>
+</svg>

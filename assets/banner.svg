@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d1117" />
+      <stop offset="50%" stop-color="#161b22" />
+      <stop offset="100%" stop-color="#0a0c10" />
+    </linearGradient>
+
+    <!-- Accent Gradient -->
+    <linearGradient id="primaryGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#818cf8" />
+      <stop offset="100%" stop-color="#c084fc" />
+    </linearGradient>
+
+    <!-- Card Background -->
+    <linearGradient id="cardGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#21262d" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#161b22" stop-opacity="0.9" />
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="25" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <style>
+    .title { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-weight: 800; font-size: 58px; fill: url(#primaryGradient); }
+    .subtitle { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-weight: 400; font-size: 22px; fill: #94a3b8; }
+    .code-text { font-family: 'Fira Code', 'JetBrains Mono', Consolas, monospace; font-size: 15px; fill: #e2e8f0; }
+    .code-kw { fill: #f43f5e; font-weight: bold; }
+    .code-type { fill: #38bdf8; }
+    .code-str { fill: #a3e635; }
+    .code-method { fill: #fbbf24; }
+    .code-num { fill: #f59e0b; }
+    .badge-text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 13px; font-weight: 600; fill: #38bdf8; }
+  </style>
+
+  <!-- Canvas Background -->
+  <rect width="1200" height="400" rx="16" fill="url(#bgGradient)" />
+
+  <!-- Background Decorative Glowing Orbs -->
+  <circle cx="200" cy="100" r="140" fill="#38bdf8" opacity="0.08" filter="url(#glow)" />
+  <circle cx="1000" cy="300" r="160" fill="#c084fc" opacity="0.08" filter="url(#glow)" />
+
+  <!-- Outer Border -->
+  <rect x="1" y="1" width="1198" height="398" rx="15" fill="none" stroke="#30363d" stroke-width="1.5" />
+
+  <!-- Left Side: Branding & Info -->
+  <g transform="translate(80, 80)">
+    <!-- Pill Badge -->
+    <rect x="0" y="0" width="170" height="28" rx="14" fill="#0369a1" fill-opacity="0.2" stroke="#38bdf8" stroke-width="1" stroke-opacity="0.4" />
+    <text x="85" y="19" text-anchor="middle" class="badge-text">⚡ MODERN C++17 / 20 / 23</text>
+
+    <!-- Project Title -->
+    <text x="0" y="85" class="title">PyStringLib</text>
+
+    <!-- Subtitle -->
+    <text x="0" y="130" class="subtitle">Python's string superpowers brought into Modern C++.</text>
+    <text x="0" y="160" class="subtitle" font-size="18px" fill="#64748b">Header-only • Zero-copy views • Negative slicing • 5M+ ops/sec</text>
+
+    <!-- Feature Tags -->
+    <g transform="translate(0, 195)">
+      <rect x="0" y="0" width="105" height="28" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1" />
+      <text x="52" y="18" text-anchor="middle" font-family="sans-serif" font-size="12px" fill="#cbd5e1">Header-Only</text>
+
+      <rect x="115" y="0" width="110" height="28" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1" />
+      <text x="170" y="18" text-anchor="middle" font-family="sans-serif" font-size="12px" fill="#cbd5e1">String Views</text>
+
+      <rect x="235" y="0" width="105" height="28" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1" />
+      <text x="287" y="18" text-anchor="middle" font-family="sans-serif" font-size="12px" fill="#cbd5e1">Python Slices</text>
+
+      <rect x="350" y="0" width="110" height="28" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1" />
+      <text x="405" y="18" text-anchor="middle" font-family="sans-serif" font-size="12px" fill="#cbd5e1">Fluent Chaining</text>
+    </g>
+  </g>
+
+  <!-- Right Side: Code Window Card -->
+  <g transform="translate(640, 50)">
+    <!-- Card Frame -->
+    <rect width="480" height="300" rx="12" fill="url(#cardGradient)" stroke="#30363d" stroke-width="1.2" />
+
+    <!-- Window Header / Buttons -->
+    <circle cx="24" cy="22" r="6" fill="#f43f5e" />
+    <circle cx="44" cy="22" r="6" fill="#fbbf24" />
+    <circle cx="64" cy="22" r="6" fill="#10b981" />
+    <text x="240" y="26" text-anchor="middle" font-family="monospace" font-size="12px" fill="#64748b">example.cpp</text>
+    <line x1="0" y1="42" x2="480" y2="42" stroke="#30363d" stroke-width="1" />
+
+    <!-- Code Block -->
+    <g transform="translate(25, 75)">
+      <text x="0" y="0" class="code-text"><tspan class="code-kw">#include</tspan> <tspan class="code-str">&lt;pystring/pystring.hpp&gt;</tspan></text>
+      
+      <text x="0" y="30" class="code-text"><tspan class="code-type">pystring::String</tspan> s = <tspan class="code-str">"  hello world!  "</tspan>;</text>
+      
+      <text x="0" y="70" class="code-text"><tspan class="code-kw">auto</tspan> clean = s.<tspan class="code-method">strip</tspan>().<tspan class="code-method">upper</tspan>();</text>
+      <text x="0" y="95" class="code-text" fill="#64748b">// -&gt; "HELLO WORLD!"</text>
+
+      <text x="0" y="130" class="code-text"><tspan class="code-kw">auto</tspan> rev = s(<tspan class="code-kw">null</tspan>, <tspan class="code-kw">null</tspan>, <tspan class="code-num">-1</tspan>);</text>
+      <text x="0" y="155" class="code-text" fill="#64748b">// Pythonic slice: s[::-1]</text>
+
+      <text x="0" y="190" class="code-text"><tspan class="code-kw">char</tspan> last = s[<tspan class="code-num">-1</tspan>];  <tspan fill="#64748b">// Negative indexing!</tspan></text>
+    </g>
+  </g>
+</svg>
